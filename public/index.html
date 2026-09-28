@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Fake Link Analyzer</title>
+</head>
+<body>
+  <h1>Fake Link Analyzer</h1>
+  <textarea id="input" rows="5" cols="40" placeholder="Paste a message or link"></textarea>
+  <br>
+  <button onclick="check()">Check</button>
+  <p id="result"></p>
+
+  <script>
+    async function check() {
+      const text = document.getElementById("input").value;
+      const response = await fetch("/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text })
+      });
+      const data = await response.json();
+      document.getElementById("result").innerText = "Verdict: " + data.verdict;
+    }
+  </script>
+</body>
+</html>
