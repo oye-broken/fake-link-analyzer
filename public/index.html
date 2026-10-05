@@ -8,7 +8,7 @@
   <textarea id="input" rows="5" cols="40" placeholder="Paste a message or link"></textarea>
   <br>
   <button onclick="check()">Check</button>
-  <p id="result"></p>
+  <p id="result" style="white-space: pre-line;"></p>
 
   <script>
     async function check() {
@@ -19,7 +19,14 @@
         body: JSON.stringify({ text })
       });
       const data = await response.json();
-      document.getElementById("result").innerText = "Verdict: " + data.verdict;
+      let out = "Verdict: " + data.verdict;
+      if (data.links.length > 0) {
+        out += "\nLinks found: " + data.links.map((l) => l.url).join(", ");
+      }
+      if (data.reasons.length > 0) {
+        out += "\nWhy:\n- " + data.reasons.join("\n- ");
+      }
+      document.getElementById("result").innerText = out;
     }
   </script>
 </body>
