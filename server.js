@@ -1,3 +1,4 @@
+const analyzeLink = require('./utils/analyzeLink');
 const express = require("express");
 const path = require("path");
 const app = express();
@@ -30,13 +31,15 @@ const BRANDS = {
   hdfcbank: ["hdfcbank.com"],
   icicibank: ["icicibank.com"],
   sbi: ["sbi.co.in", "onlinesbi.sbi"],
-  irctc: ["irctc.co.in"]
+  irctc: ["irctc.co.in"],
+  swiggy:["swiggy.com"],
+  ngit:["ngit.ac.in"]
 };
  
 // Cheap endings that scammers use a lot
 const RISKY_TLDS = new Set([
   "xyz", "top", "click", "buzz", "icu", "club", "work", "live",
-  "loan", "tk", "ml", "ga", "cf", "gq", "rest", "cyou", "sbs"
+  "loan", "tk", "ml", "ga", "cf", "gq", "rest", "cyou", "sbs","congratulations","lottery"
 ]);
  
 // Words that show up in scam links
@@ -132,6 +135,33 @@ function checkLink(link) {
   if (found.length > 0 && !onRealSite) {
     score += 1;
     reasons.push(`${url} contains words often used in scams: ${found.join(", ")}`);
+  }
+     // 6. Not using HTTPS
+  if (/^http:\/\//i.test(url)) {
+    score += 1;
+    reasons.push(`${url} does not use a secure (https) connection`);
+  }
+  if(/^https:\/\/i.test(url)){
+    score -=1;
+    reasons.push(`${url} contains a secure connection`);
+  }
+
+  // 7. "@" in the link can hide the real website
+  if (url.includes("@")) {
+    score += 2;
+    reasons.push(`${url} contains "@" which can hide the real website`);
+  }
+
+  // 8. Look-alike (punycode) characters in the domain
+  if (host.startsWith("xn--") || host.includes(".xn--")) {
+    score += 3;
+    reasons.push(`${url} uses look-alike characters in the website name`);
+  }
+
+  // 9. Too many parts in the domain
+  if (host.split(".").length > 4) {
+    score += 1;
+    reasons.push(`${url} has too many sub-parts in the website name`);
   }
  
   return { score, reasons };
