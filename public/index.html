@@ -2,32 +2,104 @@
 <html>
 <head>
   <title>Fake Link Analyzer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 30px auto;
+      padding: 0 15px;
+    }
+    textarea {
+      width: 100%;
+      box-sizing: border-box;
+    }
+    button {
+      padding: 8px 16px;
+      margin-top: 8px;
+      cursor: pointer;
+    }
+    #resultBox {
+      margin-top: 20px;
+      padding: 15px;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+    }
+    .scam {
+      color: red;
+    }
+    .suspicious {
+      color: orange;
+    }
+    .safe {
+      color: green;
+    }
+    .neutral {
+      color: grey;
+    }
+  </style>
 </head>
 <body>
   <h1>Fake Link Analyzer</h1>
-  <textarea id="input" rows="5" cols="40" placeholder="Paste a message or link"></textarea>
+  <textarea id="input" rows="5" placeholder="Paste a message or link"></textarea>
   <br>
-  <button onclick="check()">Check</button>
-  <p id="result" style="white-space: pre-line;"></p>
+  <button id="checkBtn">Check</button>
+
+  <div id="resultBox" style="display:none">
+    <h2 id="verdict"></h2>
+    <ul id="reasons"></ul>
+    <button id="proceed">Proceed</button>
+    <button id="cancel">Cancel</button>
+  </div>
 
   <script>
+    const input = document.getElementById("input");
+    const resultBox = document.getElementById("resultBox");
+    const verdictEl = document.getElementById("verdict");
+    const reasonsEl = document.getElementById("reasons");
+
     async function check() {
-      const text = document.getElementById("input").value;
+      const text = input.value;
       const response = await fetch("/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text })
       });
       const data = await response.json();
-      let out = "Verdict: " + data.verdict;
-      if (data.links.length > 0) {
-        out += "\nLinks found: " + data.links.map((l) => l.url).join(", ");
+
+      // show the box and the verdict
+      resultBox.style.display = "block";
+      verdictEl.innerText = data.verdict;
+
+      // colour by verdict
+      if (data.verdict === "Likely scam") {
+        verdictEl.className = "scam";
+      } else if (data.verdict === "Suspicious") {
+        verdictEl.className = "suspicious";
+      } else if (data.verdict === "No links found") {
+        verdictEl.className = "neutral";
+      } else {
+        verdictEl.className = "safe";
       }
-      if (data.reasons.length > 0) {
-        out += "\nWhy:\n- " + data.reasons.join("\n- ");
-      }
-      document.getElementById("result").innerText = out;
+
+      // clear old reasons, then add the new ones
+      reasonsEl.innerHTML = "";
+      data.reasons.forEach((r) => {
+        const li = document.createElement("li");
+        li.innerText = r;
+        reasonsEl.appendChild(li);
+      });
     }
+
+    document.getElementById("checkBtn").addEventListener("click", check);
+
+    document.getElementById("cancel").addEventListener("click", () => {
+      resultBox.style.display = "none";
+      input.value = "";
+    });
+
+    document.getElementById("proceed").addEventListener("click", () => {
+      alert("Aap apne risk pe aage badh rahe ho");
+    });
   </script>
 </body>
 </html>
